@@ -1,5 +1,5 @@
 // Middleware centralizado de tratamento de erros
-const errorHandler = (err, req, res) => {
+const errorHandler = (err, req, res, next) => {
   console.error('Erro:', {
     message: err.message,
     stack: err.stack,
@@ -10,6 +10,7 @@ const errorHandler = (err, req, res) => {
   const message = err.message || 'Erro interno do servidor';
 
   res.status(statusCode).json({
+    success: false,
     error: message,
     statusCode,
     timestamp: new Date().toISOString(),

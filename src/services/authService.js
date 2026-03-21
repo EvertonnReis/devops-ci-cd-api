@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const AppError = require('../utils/AppError');
 const { getUserByEmail, createUser } = require('../database/users');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'seu-secret-key-desenvolvimento';
@@ -15,25 +16,16 @@ const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
 const register = async (email, password, name) => {
   // Validações
   if (!email || !password || !name) {
-    throw {
-      statusCode: 400,
-      message: 'Email, senha e nome são obrigatórios'
-    };
+    throw new AppError('Email, senha e nome são obrigatórios', 400);
   }
 
   if (password.length < 6) {
-    throw {
-      statusCode: 400,
-      message: 'Senha deve ter no mínimo 6 caracteres'
-    };
+    throw new AppError('Senha deve ter no mínimo 6 caracteres', 400);
   }
 
   // Verifica se usuário já existe
   if (getUserByEmail(email)) {
-    throw {
-      statusCode: 409,
-      message: 'Usuário já existe com este email'
-    };
+    throw new AppError('Usuário já existe com este email', 409);
   }
 
   // Hash da senha
@@ -72,28 +64,19 @@ const register = async (email, password, name) => {
 const login = async (email, password) => {
   // Validações
   if (!email || !password) {
-    throw {
-      statusCode: 400,
-      message: 'Email e senha são obrigatórios'
-    };
+    throw new AppError('Email e senha são obrigatórios', 400);
   }
 
   // Busca usuário
   const user = getUserByEmail(email);
   if (!user) {
-    throw {
-      statusCode: 401,
-      message: 'Credenciais inválidas'
-    };
+    throw new AppError('Credenciais inválidas', 401);
   }
 
   // Verifica senha
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) {
-    throw {
-      statusCode: 401,
-      message: 'Credenciais inválidas'
-    };
+    throw new AppError('Credenciais inválidas', 401);
   }
 
   // Remove senha da resposta
