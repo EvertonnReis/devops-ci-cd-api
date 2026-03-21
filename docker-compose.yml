@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  # Serviço da API
+  api:
+    # Build da imagem local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    # Nome do container
+    container_name: devops-api
+    
+    # Variáveis de ambiente
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key}
+    
+    # Portas (host:container)
+    ports:
+      - "3000:3000"
+    
+    # Volumes para hot-reload em desenvolvimento
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+    
+    # Comando para iniciar em modo desenvolvimento
+    command: npm run dev
+    
+    # Política de restart
+    restart: unless-stopped
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Recursos limitados
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
