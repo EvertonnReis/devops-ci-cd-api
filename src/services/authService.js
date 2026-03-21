@@ -40,7 +40,7 @@ const register = async (email, password, name) => {
   });
 
   // Remove senha da resposta
-  const { password: _, ...userWithoutPassword } = user;
+  const { password: _password, ...userWithoutPassword } = user;
 
   // Gera token JWT
   const token = jwt.sign(
@@ -80,9 +80,9 @@ const login = async (email, password) => {
   }
 
   // Remove senha da resposta
-  const { password: _, ...userWithoutPassword } = user;
+  const { password: _password2, ...userWithoutPassword } = user;
 
-  // Gera token JWT
+  // Gera token JWT     
   const token = jwt.sign(
     { id: user.id, email: user.email, name: user.name },
     JWT_SECRET,
