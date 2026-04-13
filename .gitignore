@@ -50,6 +50,29 @@ web_modules/
 # Optional npm cache directory
 .npm
 
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker
+
+# Temporary files
+tmp/
+temp/
+.npm
+
 # Optional eslint cache
 .eslintcache
 

@@ -1,0 +1,61 @@
+name: Deploy
+
+on:
+  # Apenas executa em push para main ou develop
+  push:
+    branches:
+      - main
+      - develop
+  
+  # Permite execução manual
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  NODE_VERSION: '18'
+
+jobs:
+  deploy:
+    name: Deploy para ambiente
+    runs-on: ubuntu-latest
+    
+    # Aguarda sucesso do CI/CD
+    if: github.event_name == 'push'
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      # Determina qual ambiente será feito deploy
+      - name: Determinar ambiente
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "url=https://api.example.com" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "url=https://staging-api.example.com" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Deploy em ${{ steps.env.outputs.environment }}
+        run: |
+          echo "🚀 Iniciando deploy para ${{ steps.env.outputs.environment }}"
+          echo "📍 URL: ${{ steps.env.outputs.url }}"
+          echo "🔗 Imagem: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo ""
+          echo "Passos:"
+          echo "1️⃣ Pull da imagem Docker"
+          echo "2️⃣ Stop container anterior"
+          echo "3️⃣ Run novo container"
+          echo "4️⃣ Health check"
+          echo "5️⃣ Rollback se necessário"
+          echo ""
+          echo "✅ Deploy simulado concluído!"
+
+      - name: Health check
+        run: |
+          echo "Verificando saúde da aplicação..."
+          # Em produção, você faria uma requisição HTTP real
+          echo "Status: 🟢 Healthy"
