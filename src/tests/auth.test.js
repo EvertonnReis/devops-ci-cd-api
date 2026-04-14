@@ -1,5 +1,7 @@
+const express = require('express');
 const request = require('supertest');
 const app = require('../index');
+const { errorHandler } = require('../middleware/errorHandler');
 const { clearAll } = require('../database/users');
 
 describe('Auth API - Testes de integração', () => {
