@@ -28,20 +28,6 @@ app.get('/health', (req, res) => {
 // Rotas
 app.use('/api/auth', authRoutes);
 
-// Rota de teste de erro genérico (para cobertura do errorHandler)
-if (process.env.NODE_ENV === 'test') {
-  app.get('/test/error', (req, res, next) => {
-    const err = new Error('Erro genérico sem statusCode');
-    next(err);
-  });
-
-  app.get('/test/error-empty', (req, res, next) => {
-    const err = new Error();
-    // Erro sem message
-    next(err);
-  });
-}
-
 // Rota 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });

@@ -6,6 +6,7 @@ const errorHandler = (err, req, res, _next) => {
   console.error('Erro:', {
     message,
     statusCode,
+    stack: err.stack,
     timestamp: new Date().toISOString()
   });
 

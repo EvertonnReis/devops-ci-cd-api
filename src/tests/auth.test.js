@@ -1,5 +1,7 @@
+const express = require('express');
 const request = require('supertest');
 const app = require('../index');
+const { errorHandler } = require('../middleware/errorHandler');
 const { clearAll } = require('../database/users');
 
 describe('Auth API - Testes de integração', () => {
@@ -226,15 +228,20 @@ describe('Auth API - Testes de integração', () => {
   });
 
   describe('Error Handler - Middleware de erros', () => {
-    beforeAll(() => {
-      // Salvar NODE_ENV original
-      this.originalNodeEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'test';
-    });
+    let errorTestApp;
 
-    afterAll(() => {
-      // Restaurar NODE_ENV original
-      process.env.NODE_ENV = this.originalNodeEnv;
+    beforeAll(() => {
+      errorTestApp = express();
+
+      errorTestApp.get('/test/error', (req, res, next) => {
+        next(new Error('Erro genérico sem statusCode'));
+      });
+
+      errorTestApp.get('/test/error-empty', (req, res, next) => {
+        next(new Error());
+      });
+
+      errorTestApp.use(errorHandler);
     });
 
     it('deve retornar erro com statusCode customizado', async () => {
@@ -255,7 +262,7 @@ describe('Auth API - Testes de integração', () => {
 
     it('deve usar statusCode 500 como fallback quando não definido', async () => {
       // Chama endpoint de teste que lança erro genérico
-      const response = await request(app).get('/test/error');
+      const response = await request(errorTestApp).get('/test/error');
 
       // Erro genérico sem statusCode deve retornar 500
       expect(response.statusCode).toBe(500);
@@ -266,7 +273,7 @@ describe('Auth API - Testes de integração', () => {
 
     it('deve usar mensagem default quando erro não tem message', async () => {
       // Chama endpoint de teste que lança erro sem message
-      const response = await request(app).get('/test/error-empty');
+      const response = await request(errorTestApp).get('/test/error-empty');
 
       // Erro sem message deve usar a mensagem default
       expect(response.statusCode).toBe(500);
@@ -274,33 +281,43 @@ describe('Auth API - Testes de integração', () => {
     });
 
     it('deve incluir stack trace quando NODE_ENV é development', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'test@example.com',
-          password: 'short',
-          name: 'Test'
-        });
+      try {
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({
+            email: 'test@example.com',
+            password: 'short',
+            name: 'Test'
+          });
 
-      expect(response.statusCode).toBe(400);
-      expect(response.body).toHaveProperty('stack');
+        expect(response.statusCode).toBe(400);
+        expect(response.body).toHaveProperty('stack');
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
     });
 
     it('deve não incluir stack trace quando NODE_ENV é production', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production';
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'test@example.com',
-          password: 'short',
-          name: 'Test'
-        });
+      try {
+        const response = await request(app)
+          .post('/api/auth/register')
+          .send({
+            email: 'test@example.com',
+            password: 'short',
+            name: 'Test'
+          });
 
-      expect(response.statusCode).toBe(400);
-      expect(response.body.stack).toBeUndefined();
+        expect(response.statusCode).toBe(400);
+        expect(response.body.stack).toBeUndefined();
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
     });
   });
 });
