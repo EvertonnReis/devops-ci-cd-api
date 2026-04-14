@@ -17,7 +17,7 @@ const authenticate = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'seu-secret-key');
     req.user = decoded;
     next();
-  } catch (_err) {
+  } catch {
     return res.status(401).json({ success: false });
   }
 };

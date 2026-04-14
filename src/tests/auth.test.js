@@ -1,5 +1,7 @@
+const express = require('express');
 const request = require('supertest');
 const app = require('../index');
+const { errorHandler } = require('../middleware/errorHandler');
 const { clearAll } = require('../database/users');
 
 describe('Auth API - Testes de integração', () => {
@@ -193,6 +195,114 @@ describe('Auth API - Testes de integração', () => {
       expect(response.statusCode).toBe(200);
       expect(response.body.status).toBe('UP');
       expect(response.body).toHaveProperty('timestamp');
+    });
+  });
+
+  describe('Auth Middleware - Cobertura de branches', () => {
+    it('deve rejeitar header Authorization sem "Bearer "', async () => {
+      const response = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', 'Basic dXNlcjpwYXNz');
+
+      expect(response.statusCode).toBe(401);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('deve rejeitar header Authorization vazio', async () => {
+      const response = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', '');
+
+      expect(response.statusCode).toBe(401);
+      expect(response.body.success).toBe(false);
+    });
+
+    it('deve rejeitar "Bearer " sem token', async () => {
+      const response = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', 'Bearer ');
+
+      expect(response.statusCode).toBe(401);
+      expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('Error Handler - Middleware de erros', () => {
+    beforeAll(() => {
+      // Salvar NODE_ENV original
+      this.originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'test';
+    });
+
+    afterAll(() => {
+      // Restaurar NODE_ENV original
+      process.env.NODE_ENV = this.originalNodeEnv;
+    });
+
+    it('deve retornar erro com statusCode customizado', async () => {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send({
+          email: 'test@example.com',
+          password: 'pass',
+          name: 'Test'
+        });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body).toHaveProperty('statusCode', 400);
+      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('timestamp');
+    });
+
+    it('deve usar statusCode 500 como fallback quando não definido', async () => {
+      // Chama endpoint de teste que lança erro genérico
+      const response = await request(app).get('/test/error');
+
+      // Erro genérico sem statusCode deve retornar 500
+      expect(response.statusCode).toBe(500);
+      expect(response.body.success).toBe(false);
+      expect(response.body.statusCode).toBe(500);
+      expect(response.body).toHaveProperty('error');
+    });
+
+    it('deve usar mensagem default quando erro não tem message', async () => {
+      // Chama endpoint de teste que lança erro sem message
+      const response = await request(app).get('/test/error-empty');
+
+      // Erro sem message deve usar a mensagem default
+      expect(response.statusCode).toBe(500);
+      expect(response.body.error).toBe('Erro interno do servidor');
+    });
+
+    it('deve incluir stack trace quando NODE_ENV é development', async () => {
+      process.env.NODE_ENV = 'development';
+
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send({
+          email: 'test@example.com',
+          password: 'short',
+          name: 'Test'
+        });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.body).toHaveProperty('stack');
+    });
+
+    it('deve não incluir stack trace quando NODE_ENV é production', async () => {
+      process.env.NODE_ENV = 'production';
+
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send({
+          email: 'test@example.com',
+          password: 'short',
+          name: 'Test'
+        });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.body.stack).toBeUndefined();
     });
   });
 });

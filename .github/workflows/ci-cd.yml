@@ -37,6 +37,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       - run: npm ci
+      - name: Setup .env for tests
+        run: |
+          echo "JWT_SECRET=dev-secret" > .env
+          echo "JWT_EXPIRY=24h" >> .env
       - run: npm run test
 
   # JOB 3: Security - npm audit
