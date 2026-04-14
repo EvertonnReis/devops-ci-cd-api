@@ -26,9 +26,17 @@ const createUser = (user) => {
   return newUser;
 };
 
+/**
+ * Limpa todos os usuários (para testes)
+ */
+const clearAll = () => {
+  users.clear();
+};
+
 module.exports = {
   getUserByEmail,
   getUserById,
   createUser,
+  clearAll,
   users
 };

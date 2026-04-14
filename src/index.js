@@ -18,8 +18,8 @@ app.use(requestLogger);
 
 // Health check endpoint para Docker/Kubernetes
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'UP', 
+  res.status(200).json({
+    status: 'UP',
     timestamp: new Date().toISOString(),
     environment: NODE_ENV
   });
@@ -36,9 +36,11 @@ app.use((req, res) => {
 // Middleware de erro global
 app.use(errorHandler);
 
-// Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT} | Ambiente: ${NODE_ENV}`);
-});
+// Iniciar servidor apenas se for o módulo principal
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT} | Ambiente: ${NODE_ENV}`);
+  });
+}
 
 module.exports = app;
