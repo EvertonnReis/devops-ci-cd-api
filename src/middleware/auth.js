@@ -7,19 +7,18 @@ const jwt = require('jsonwebtoken');
  */
 const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  const token = authHeader?.substring(7);
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token não fornecido' });
+  if (!authHeader?.startsWith('Bearer ') || !token) {
+    return res.status(401).json({ success: false });
   }
-
-  const token = authHeader.substring(7); // Remove "Bearer "
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'seu-secret-key');
     req.user = decoded;
     next();
-  } catch (_err) {
-    res.status(401).json({ error: 'Token inválido ou expirado' });
+  } catch {
+    return res.status(401).json({ success: false });
   }
 };
 
